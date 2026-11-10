@@ -1,0 +1,55 @@
+name: Build r2ghidra (Android arm64)
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Install build dependencies
+        run: |
+          sudo apt-get update -y
+          sudo apt-get install -y \
+            clang \
+            meson \
+            ninja-build \
+            git \
+            python3 \
+            pkg-config \
+            curl \
+            wget \
+            unzip
+
+      - name: Install radare2 (latest from git)
+        run: |
+          git clone --depth=1 https://github.com/radareorg/radare2.git /tmp/radare2
+          cd /tmp/radare2
+          ./sys/install.sh --prefix=/usr/local
+          r2 -version
+
+      - name: Install r2ghidra via r2pm
+        run: |
+          r2pm -U
+          r2pm -ci r2ghidra
+
+      - name: Verify r2ghidra installed
+        run: |
+          r2 -H R2_USER_PLUGINS
+          ls -la "$(r2 -H R2_USER_PLUGINS)/" | grep -i ghidra || true
+
+      - name: Upload r2ghidra plugin artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: r2ghidra-plugin
+          path: |
+            ~/.local/share/radare2/r2pm/plugins/r2ghidra*
+            ~/.config/radare2/r2pm/plugins/r2ghidra*
+          retention-days: 7
