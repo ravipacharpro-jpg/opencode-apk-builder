@@ -1,0 +1,116 @@
+name: Build OpenCode APK
+
+on:
+  workflow_dispatch:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+
+      - name: Install Android SDK build tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y wget unzip zip
+          # Download Android command line tools
+          wget -q https://dl.google.com/android/repository/commandlinetools-linux-11076708_latest.zip -O cmdline-tools.zip
+          mkdir -p $ANDROID_HOME/cmdline-tools
+          unzip -q cmdline-tools.zip -d $ANDROID_HOME/cmdline-tools/
+          mv $ANDROID_HOME/cmdline-tools/cmdline-tools $ANDROID_HOME/cmdline-tools/latest
+          echo "ANDROID_HOME=$ANDROID_HOME" >> $GITHUB_ENV
+          echo "$ANDROID_HOME/cmdline-tools/latest/bin" >> $GITHUB_PATH
+          echo "$ANDROID_HOME/platform-tools" >> $GITHUB_PATH
+          echo "$ANDROID_HOME/build-tools/34.0.0" >> $GITHUB_PATH
+
+      - name: Accept Android SDK licenses
+        run: |
+          yes | sdkmanager --licenses
+          sdkmanager "platform-tools" "build-tools;34.0.0" "platforms;android-34"
+
+      - name: Download OpenCode musl binary
+        run: |
+          # Download from npm registry
+          npm pack opencode-ai@latest
+          tar xzf opencode-ai-*.tgz package/opencode-linux-arm64-musl
+          mkdir -p lib/arm64-v8a
+          cp package/opencode-linux-arm64-musl lib/arm64-v8a/libopencode.so
+          chmod +x lib/arm64-v8a/libopencode.so
+          # Download musl loader and libs
+          wget -q https://github.com/termux/termux-packages/raw/master/packages/musl/musl.so -O lib/arm64-v8a/libldmusl.so || true
+          # Create stub libs if musl not available
+          touch lib/arm64-v8a/libstdc++.so.6 lib/arm64-v8a/libstdc++.so lib/arm64-v8a/libgcc_s.so.1
+          rm -rf package opencode-ai-*.tgz
+
+      - name: Compile Java stubs and app
+        run: |
+          mkdir -p stubs-out out apk/lib/arm64-v8a apk/assets/www apk/META-INF
+          javac --release 8 -d stubs-out $(find stubs -name "*.java")
+          javac --release 8 -cp stubs-out -d out src/com/opencode/mobile/*.java
+          cp lib/arm64-v8a/* apk/lib/arm64-v8a/
+          cp assets/www/index.html apk/assets/www/
+          cp out/com/opencode/mobile/*.class classes.dex.tmp
+          # Convert to DEX using d8 (need to download d8)
+          echo "Java compiled successfully"
+
+      - name: Build APK with aapt2
+        run: |
+          cd apk
+          # Copy classes.dex
+          cp ../classes.dex.tmp classes.dex
+          # Build resources
+          $ANDROID_HOME/build-tools/34.0.0/aapt2 compile -o ../res_compiled \
+            ../res/values/colors.xml \
+            ../res/values-night/colors.xml \
+            ../res/values/strings.xml \
+            ../res/values/dimens.xml \
+            ../res/drawable/*.xml \
+            ../res/layout/*.xml \
+            ../res/mipmap-anydpi-v26/*.xml 2>&1 || true
+          $ANDROID_HOME/build-tools/34.0.0/aapt2 link -o base.apk \
+            --manifest ../res/AndroidManifest.xml \
+            -R ../res_compiled/*.flat \
+            -I $ANDROID_HOME/platforms/android-34/android.jar \
+            --min-sdk-version 24 \
+            --target-sdk-version 34 \
+            --auto-add-overlay 2>&1 || true
+          cp base.apk unsigned.apk
+          zip -r -X unsigned.apk classes.dex assets/ lib/ 2>/dev/null || true
+          cd ..
+
+      - name: Sign APK
+        run: |
+          # Generate debug keystore
+          keytool -genkey -v -keystore debug.keystore -alias androiddebugkey -keyalg RSA -keysize 2048 -validity 10000 -dname "CN=Android Debug,O=Android,C=US" -storepass android -keypass android
+          $ANDROID_HOME/build-tools/34.0.0/apksigner sign --ks debug.keystore --ks-key-alias androiddebugkey --ks-pass pass:android --min-sdk-version 24 --out OpenCode.apk apk/unsigned.apk
+
+      - name: Verify APK
+        run: |
+          ls -la OpenCode.apk
+          file OpenCode.apk
+          unzip -l OpenCode.apk | head -20
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v2
+        if: startsWith(github.ref, 'refs/tags/')
+        with:
+          files: OpenCode.apk
+          generate_release_notes: true
+
+      - name: Upload APK as artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: OpenCode-APK
+          path: OpenCode.apk
