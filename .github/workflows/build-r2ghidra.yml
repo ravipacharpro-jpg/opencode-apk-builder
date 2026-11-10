@@ -40,16 +40,27 @@ jobs:
           r2pm -U
           r2pm -ci r2ghidra
 
-      - name: Verify r2ghidra installed
+      - name: Find r2ghidra plugin paths
+        id: find_paths
         run: |
-          r2 -H R2_USER_PLUGINS
-          ls -la "$(r2 -H R2_USER_PLUGINS)/" | grep -i ghidra || true
+          echo "R2_USER_PLUGINS=$(r2 -H R2_USER_PLUGINS)" >> $GITHUB_OUTPUT
+          echo "R2_LIBR_PLUGINS=$(r2 -H R2_LIBR_PLUGINS)" >> $GITHUB_OUTPUT
+
+      - name: List plugin dirs for debugging
+        run: |
+          echo "=== User plugins ==="
+          ls -la "$(r2 -H R2_USER_PLUGINS)/" 2>/dev/null | grep -i ghidra || echo "No ghidra in user plugins"
+          echo "=== Libr plugins ==="
+          ls -la "$(r2 -H R2_LIBR_PLUGINS)/" 2>/dev/null | grep -i ghidra || echo "No ghidra in libr plugins"
+          echo "=== All plugin dirs ==="
+          find / -name "*ghidra*" -type f 2>/dev/null | head -20
 
       - name: Upload r2ghidra plugin artifact
         uses: actions/upload-artifact@v4
         with:
           name: r2ghidra-plugin
           path: |
-            ~/.local/share/radare2/r2pm/plugins/r2ghidra*
-            ~/.config/radare2/r2pm/plugins/r2ghidra*
+            ${{ steps.find_paths.outputs.R2_USER_PLUGINS }}/**/ghidra*
+            ${{ steps.find_paths.outputs.R2_LIBR_PLUGINS }}/**/ghidra*
           retention-days: 7
+          if-no-files-found: warn
