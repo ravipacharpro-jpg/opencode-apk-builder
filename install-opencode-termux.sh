@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # ============================================================
 # OpenCode Termux Installer — One Command Setup
-# Works on any Android phone with Termux (arm64/aarch64)
+# Direct install, bina kisi API key setup ke
 # ============================================================
 set -euo pipefail
 
@@ -52,8 +52,8 @@ ok "Using $(go version) ($GOOS/$GOARCH)"
 
 # -----------------------------------------------------------
 # 2. Build OpenCode from source
-#    NOTE: Prebuilt opencode-linux-arm64.tar.gz is glibc Linux
-#    and crashes on Termux (SIGSYS). We build from source so it
+#    Prebuilt opencode-linux-arm64.tar.gz is glibc Linux
+#    and crashes on Termux (SIGSYS). Building from source
 #    targets Android natively.
 # -----------------------------------------------------------
 info "Building github.com/opencode-ai/opencode@latest from source..."
@@ -65,7 +65,7 @@ if [ ! -x "$BIN_SRC" ]; then
 fi
 
 # -----------------------------------------------------------
-# 3. Install into Termux PATH ($PREFIX/bin is on PATH by default)
+# 3. Install into Termux PATH
 # -----------------------------------------------------------
 mkdir -p "$BIN_DIR"
 cp -f "$BIN_SRC" "$BIN_DIR/$APP"
@@ -97,19 +97,13 @@ echo "============================================================"
 ok "OpenCode installed successfully!"
 echo "============================================================"
 echo ""
-echo "Next steps:"
-echo "  1. Set an API key (required):"
-echo "     export GEMINI_API_KEY=your_key_here"
-echo "     # OR export ANTHROPIC_API_KEY=..."
-echo "     # OR export OPENAI_API_KEY=..."
-echo ""
-echo "  2. Run OpenCode:"
-echo "     opencode"
-echo ""
-echo "  3. Optional: install fzf + ripgrep for better search:"
-echo "     pkg install fzf ripgrep"
-echo ""
-echo "One command to run anytime:"
+echo "Run directly:"
 echo "  opencode"
+echo ""
+echo "Pehli baar run karne par app khud API key mang lega"
+echo "(Anthropic / OpenAI / Gemini / Groq kisi bhi ek ka use kar sakte ho)"
+echo ""
+echo "Optional: better search ke liye"
+echo "  pkg install fzf ripgrep"
 echo ""
 echo "============================================================"
