@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="apple_black">#FF1D1D1F</color>
+    <color name="apple_gray2">#FF86868B</color>
+    <color name="apple_gray3">#FFC7C7CC</color>
+    <color name="apple_bg">#FF000000</color>
+    <color name="apple_card">#FF2C2C2E</color>
+    <color name="apple_blue">#FF0A84FF</color>
+</resources>

@@ -1,0 +1,496 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>OpenCode</title>
+<style>
+  /* ===== Apple Design System ===== */
+  :root {
+    --bg: #000000;
+    --bg-secondary: #0A0A0A;
+    --card: #1C1C1E;
+    --card-hover: #2C2C2E;
+    --border: #2C2C2E;
+    --text-primary: #FFFFFF;
+    --text-secondary: #8E8E93;
+    --text-tertiary: #636366;
+    --accent: #0A84FF;
+    --accent-hover: #0060DF;
+    --success: #30D158;
+    --warning: #FF9F0A;
+    --danger: #FF453A;
+    --shadow: rgba(0,0,0,0.4);
+    --radius: 20px;
+    --radius-sm: 10px;
+    --font: -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display", "Helvetica Neue", sans-serif;
+  }
+
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body {
+    margin: 0; padding: 0;
+    width: 100%; height: 100%;
+    background: var(--bg);
+    color: var(--text-primary);
+    font-family: var(--font);
+    font-weight: 400;
+    overflow: hidden;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* ===== App Shell ===== */
+  #app {
+    display: flex;
+    height: 100vh;
+    width: 100vw;
+  }
+
+  /* ===== Sidebar (Apple Settings style) ===== */
+  #sidebar {
+    width: 260px;
+    background: var(--bg-secondary);
+    border-right: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    z-index: 10;
+    transition: transform 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+  }
+
+  #sidebar.hidden { transform: translateX(-100%); }
+
+  .sidebar-header {
+    padding: 20px 20px 12px 20px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .app-title {
+    font-size: 18px;
+    font-weight: 600;
+    letter-spacing: -0.5px;
+    color: var(--text-primary);
+  }
+
+  .app-subtitle {
+    font-size: 11px;
+    color: var(--text-tertiary);
+    margin-top: 2px;
+    letter-spacing: -0.3px;
+  }
+
+  .sidebar-search {
+    padding: 12px 20px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .search-field {
+    width: 100%;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 8px 12px;
+    color: var(--text-primary);
+    font-size: 13px;
+    font-family: var(--font);
+    outline: none;
+  }
+  .search-field:focus { border-color: var(--accent); }
+
+  .sidebar-nav {
+    flex: 1;
+    overflow-y: auto;
+    padding: 16px 0;
+  }
+
+  .nav-section-title {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--text-tertiary);
+    padding: 0 20px 10px 20px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  .nav-item {
+    display: flex;
+    align-items: center;
+    padding: 10px 20px;
+    color: var(--text-secondary);
+    font-size: 14px;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    border-radius: 0 12px 12px 0;
+    margin: 0 12px;
+    margin-bottom: 6px;
+  }
+  .nav-item:hover { background: var(--card-hover); color: var(--text-primary); }
+  .nav-item.active { background: var(--accent); color: #FFFFFF; }
+  .nav-item svg { width: 18px; height: 18px; margin-right: 12px; flex-shrink: 0; }
+
+  /* ===== Main Content ===== */
+  #main {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .empty-state {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 40px 24px;
+  }
+
+  .empty-icon {
+    width: 64px; height: 64px;
+    background: var(--card);
+    border-radius: 16px;
+    display: flex; align-items: center; justify-content: center;
+    margin-bottom: 24px;
+    color: var(--text-tertiary);
+  }
+
+  .empty-title {
+    font-size: 22px;
+    font-weight: 600;
+    margin-bottom: 8px;
+    letter-spacing: -0.5px;
+  }
+
+  .empty-body {
+    font-size: 15px;
+    color: var(--text-secondary);
+    line-height: 1.5;
+    max-width: 300px;
+    margin-bottom: 32px;
+  }
+
+  .btn-primary {
+    background: var(--accent);
+    color: #FFFFFF;
+    border: none;
+    border-radius: 10px;
+    padding: 10px 20px;
+    font-size: 14px;
+    font-weight: 500;
+    font-family: var(--font);
+    cursor: pointer;
+    transition: background 0.15s ease;
+  }
+  .btn-primary:hover { background: var(--accent-hover); }
+
+  /* ===== Chat Area ===== */
+  #chat {
+    flex: 1;
+    overflow-y: auto;
+    padding: 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+  }
+
+  .message {
+    max-width: 70%;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    animation: fadeIn 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+  }
+
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .message.user { align-self: flex-end; }
+  .message.assistant { align-self: flex-start; }
+
+  .message-meta {
+    font-size: 11px;
+    color: var(--text-tertiary);
+    font-weight: 500;
+  }
+
+  .message-bubble {
+    padding: 12px 16px;
+    border-radius: 16px;
+    font-size: 14px;
+    line-height: 1.5;
+    word-wrap: break-word;
+  }
+
+  .message.user .message-bubble {
+    background: var(--accent);
+    color: #FFFFFF;
+    border-bottom-right-radius: 4px;
+  }
+
+  .message.assistant .message-bubble {
+    background: var(--card);
+    border: 1px solid var(--border);
+    color: var(--text-primary);
+    border-bottom-left-radius: 4px;
+  }
+
+  .message-content {
+    white-space: pre-wrap;
+    font-family: var(--font);
+  }
+
+  /* Code blocks */
+  pre {
+    background: #000000;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 12px 16px;
+    margin: 8px 0;
+    overflow-x: auto;
+    font-size: 13px;
+    font-family: "SF Mono", Menlo, Monaco, monospace;
+  }
+  code { font-family: "SF Mono", Menlo, Monaco, monospace; font-size: 12.5px; }
+  pre code { padding: 0; background: transparent; }
+
+  /* ===== Input Area (Apple Messages style) ===== */
+  #input-area {
+    background: var(--bg-secondary);
+    border-top: 1px solid var(--border);
+    padding: 12px 20px;
+    display: flex;
+    align-items: flex-end;
+    gap: 10px;
+    z-index: 100;
+  }
+
+  #message-input {
+    flex: 1;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 10px 16px;
+    color: var(--text-primary);
+    font-size: 15px;
+    font-family: var(--font);
+    outline: none;
+    resize: none;
+    min-height: 40px;
+    max-height: 120px;
+  }
+  #message-input:focus { border-color: var(--accent); }
+
+  #send-btn {
+    width: 36px; height: 36px;
+    background: var(--accent);
+    border: none;
+    border-radius: 50%;
+    color: #FFFFFF;
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer;
+    flex-shrink: 0;
+    transition: background 0.15s ease, transform 0.1s ease;
+  }
+  #send-btn:hover { background: var(--accent-hover); }
+  #send-btn:active { transform: scale(0.92); }
+  #send-btn:disabled { background: var(--text-tertiary); cursor: not-allowed; }
+
+  /* ===== Toast ===== */
+  #toast {
+    position: fixed;
+    bottom: 40px;
+    left: 50%;
+    transform: translateX(-50%) translateY(100px);
+    background: rgba(10,10,10,0.9);
+    color: #FFFFFF;
+    padding: 10px 16px;
+    border-radius: 10px;
+    font-size: 13px;
+    font-weight: 500;
+    opacity: 0;
+    transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+    pointer-events: none;
+    backdrop-filter: blur(10px);
+  }
+  #toast.show { transform: translateX(-50%) translateY(0); opacity: 1; }
+
+  /* ===== Mobile adjustments ===== */
+  @media (max-width: 600px) {
+    #sidebar { position: absolute; z-index: 20; }
+    .message { max-width: 85%; }
+  }
+</style>
+</head>
+<body>
+<div id="app">
+  <aside id="sidebar">
+    <div class="sidebar-header">
+      <div class="app-title">OpenCode</div>
+      <div class="app-subtitle">AI Coding Agent • Mobile</div>
+    </div>
+    <div class="sidebar-search">
+      <input type="text" class="search-field" placeholder="Search sessions…">
+    </div>
+    <div class="sidebar-nav">
+      <div class="nav-section-title">SESSIONS</div>
+      <div class="nav-item active" onclick="selectSession(this)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/></svg>
+        General
+      </div>
+      <div class="nav-item" onclick="selectSession(this)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+        Project: Code
+      </div>
+      <div class="nav-section-title">MODELS</div>
+      <div class="nav-item" onclick="selectModel(this)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/></svg>
+        Claude 4 Opus
+      </div>
+      <div class="nav-item" onclick="selectModel(this)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 2L2 7l10 5 10-5-10-5z"/></svg>
+        GPT-5
+      </div>
+      <div class="nav-section-title">TOOLS</div>
+      <div class="nav-item">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="16 7 21 12 16 17 15 15 17 21"/><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/></svg>
+        File Search
+      </div>
+      <div class="nav-item">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21V5a2 2 0 0 0-2-2H7a2 2 0 0 0-2 2v16"/><polyline points="16 17 21 12 16 7"/></svg>
+        Code Mode
+      </div>
+    </div>
+  </aside>
+
+  <main id="main">
+    <div id="empty-state" class="empty-state">
+      <div class="empty-icon">◆</div>
+      <div class="empty-title">Start a new session</div>
+      <div class="empty-body">Ask OpenCode to write, edit, or explain code. Your projects, your API key, your device.</div>
+      <button class="btn-primary" onclick="newSession()">New Session</button>
+    </div>
+
+    <div id="chat"></div>
+
+    <div id="input-area">
+      <textarea id="message-input" placeholder="Message OpenCode…" rows="1"></textarea>
+      <button id="send-btn" onclick="sendMessage()" disabled>▶</button>
+    </div>
+  </main>
+</div>
+
+<div id="toast"></div>
+
+<script>
+  /* ===== Apple-style interactions ===== */
+  const input = document.getElementById('message-input');
+  const sendBtn = document.getElementById('send-btn');
+  const chat = document.getElementById('chat');
+  const emptyState = document.getElementById('empty-state');
+
+  input.addEventListener('input', () => {
+    sendBtn.disabled = !input.value.trim();
+    input.style.height = 'auto';
+    input.style.height = Math.min(input.scrollHeight, 120) + 'px';
+  });
+
+  input.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      sendMessage();
+    }
+  });
+
+  function newSession() {
+    emptyState.style.display = 'none';
+    addMessage('assistant', "Hi! I'm OpenCode — your AI coding agent on mobile.\n\nWhat would you like to build today?");
+  }
+
+  function selectSession(el) {
+    document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+    el.classList.add('active');
+  }
+
+  function selectModel(el) {
+    document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+    el.classList.add('active');
+    toast('Model selected');
+  }
+
+  function addMessage(role, content) {
+    emptyState.style.display = 'none';
+    const div = document.createElement('div');
+    div.className = 'message ' + role;
+    const meta = document.createElement('div');
+    meta.className = 'message-meta';
+    meta.textContent = role === 'user' ? 'You' : 'OpenCode • Just now';
+    const bubble = document.createElement('div');
+    bubble.className = 'message-bubble';
+    bubble.innerHTML = '<div class="message-content">' + escapeHtml(content) + '</div>';
+    div.appendChild(meta);
+    div.appendChild(bubble);
+    chat.appendChild(div);
+    chat.scrollTop = chat.scrollHeight;
+  }
+
+  function escapeHtml(t) {
+    return t.replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":"&#39;"}[m]));
+  }
+
+  function toast(msg) {
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.classList.add('show');
+    setTimeout(() => t.classList.remove('show'), 2000);
+  }
+
+  async function sendMessage() {
+    const text = input.value.trim();
+    if (!text) return;
+    input.value = '';
+    input.style.height = 'auto';
+    sendBtn.disabled = true;
+
+    addMessage('user', text);
+    addMessage('assistant', '…');
+
+    try {
+      const serverUrl = 'http://127.0.0.1:49374';
+      const password = 'opencode';
+      const resp = await fetch(serverUrl + '/session/' + Date.now() + '/message', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Basic ' + btoa('opencode:' + password)
+        },
+        body: JSON.stringify({
+          parts: [{ type: 'text', content: text }]
+        })
+      });
+      const data = await resp.json();
+      // Remove thinking bubble
+      const last = chat.lastElementChild;
+      if (last && last.textContent.trim() === '…') last.remove();
+      addMessage('assistant', data.parts ? data.parts.map(p => p.content || '').join('\n') : 'No response');
+    } catch (e) {
+      const last = chat.lastElementChild;
+      if (last && last.textContent.trim() === '…') last.remove();
+      addMessage('assistant', 'Connection error. Make sure the server is running.');
+      toast('Server not reachable');
+    }
+  }
+
+  // Auto-start
+  window.onload = () => {
+    // Check if we should show empty state or resume
+    setTimeout(() => {
+      if (chat.children.length === 0) {
+        emptyState.style.display = 'flex';
+      }
+    }, 100);
+  };
+</script>
+</body>
+</html>

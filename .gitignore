@@ -1,0 +1,33 @@
+# Android build artifacts
+*.apk
+*.apk.idsig
+*.dex
+*.class
+*.jar
+.build/
+
+# IDE
+.idea/
+*.iml
+.classpath
+.project
+.settings/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Secrets
+*.keystore
+*.jks
+*.key
+secrets/
+.env
+
+# Logs
+*.log
+
+# Temporary
+tmp/
+temp/
+*.tmp
